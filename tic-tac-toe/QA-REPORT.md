@@ -10,6 +10,8 @@ Um jogo da velha para dois jogadores (X e O), jogado no mesmo dispositivo, em HT
 - `style.css` — layout e estilo visual
 - `script.js` — lógica do jogo
 
+Site publicado: [gustavoanderson.github.io/qa-automation-lab/tic-tac-toe](https://gustavoanderson.github.io/qa-automation-lab/tic-tac-toe/)
+
 ## 2. Como foi desenvolvido
 
 ### Decisão de arquitetura central: estado como única fonte de verdade
@@ -36,7 +38,9 @@ O array `boardState` (9 posições, `null`/`"X"`/`"O"`) é a **única fonte de v
 
 ## 3. O que foi efetivamente testado (não só revisado)
 
-Testes automatizados (Node.js) isolando a lógica pura de detecção de vitória, sem depender do navegador — **12 casos, todos passando**:
+### Testes automatizados da lógica (Node.js, isolados do DOM)
+
+**12 casos, todos passando**, antes mesmo da publicação:
 
 - As 8 combinações de vitória possíveis (3 linhas, 3 colunas, 2 diagonais), uma por uma
 - Tabuleiro vazio não aponta vencedor
@@ -48,16 +52,30 @@ Verificações estruturais adicionais:
 - Sintaxe do `script.js` validada (`node --check`)
 - Confirmado que o tabuleiro tem exatamente 9 células, com os 9 índices (`0`–`8`) únicos, sem duplicidade ou lacuna
 
-## 4. O que **não** foi testado (limitação conhecida, declarada com honestidade)
+### Teste manual em navegador real (site publicado via GitHub Pages)
 
-- **Não houve teste manual em navegador real** nesta rodada — a lógica foi validada isoladamente (fora do DOM) e o HTML foi verificado estruturalmente, mas o comportamento visual/interativo completo (cliques reais, foco, leitura de tela de verdade) ainda não foi observado ao vivo.
-- Não há testes automatizados de UI (Cypress) ainda — só da lógica pura.
-- Não foi testado em múltiplos navegadores/dispositivos reais.
+Depois da publicação, o jogo foi testado ao vivo em [gustavoanderson.github.io/qa-automation-lab/tic-tac-toe](https://gustavoanderson.github.io/qa-automation-lab/tic-tac-toe/), com os seguintes cenários — **todos com resultado correto**:
+
+| Cenário testado | Resultado |
+|---|---|
+| Clicar em célula vazia | Marca o jogador correto e alterna a vez |
+| Clicar (e depois clicar duas vezes) em célula já ocupada | Nenhuma alteração — nem no valor, nem na vez do jogador |
+| Completar uma linha de vitória (linha superior) | Mensagem "Jogador X venceu!" exibida, e as 3 células da linha destacadas em verde |
+| Clicar em célula vazia após o fim do jogo | Nenhuma jogada é aceita — tabuleiro permanece travado |
+| Clicar em "Reiniciar jogo" | Tabuleiro, marcações, destaque de vitória e status voltam ao estado inicial |
+| Navegação **somente por teclado** (Tab + Enter) | Foco visível em cada célula; Enter marca a célula igual a um clique; ao desabilitar a célula marcada, o foco automaticamente pula para a próxima célula disponível — sem precisar de nenhum código extra, só por usar `<button>` nativo |
+| Partida completa terminando em empate (`X O X / X O O / O X X`) | Mensagem "Empate!" exibida corretamente, sem nenhuma célula erroneamente destacada como vencedora |
+
+## 4. O que ainda não foi testado (limitação conhecida, declarada com honestidade)
+
+- Não foi testado em múltiplos navegadores (só Chrome até agora) nem em dispositivos móveis reais.
+- Não há testes automatizados de UI (Cypress) ainda — a validação em navegador foi manual.
+- Leitura de tela real (ex: NVDA/VoiceOver) não foi verificada ao vivo — só a estrutura de `aria-live`/`aria-label` foi revisada no código.
 
 ## 5. Próximos passos sugeridos (para sua aprovação, não implementados ainda)
 
 Pensando à frente no projeto, essas são melhorias que eu proporia como próximos passos — nenhuma foi implementada, ficam para você decidir:
 
-1. **Suíte de testes automatizados com Cypress** (usando a skill já pronta): cobrir exatamente os cenários deste relatório, mas agora testando o comportamento real no navegador — incluindo os `data-testid` que já deixei nos elementos (`cell-0` a `cell-8`, `reset-button`) propositalmente prontos para isso.
-2. **Verificação manual em navegador real** antes/depois da publicação, para confirmar visualmente o que os testes de lógica não conseguem ver (layout, foco, leitura de tela de verdade).
+1. **Suíte de testes automatizados com Cypress** (usando a skill já pronta): cobrir exatamente os cenários já validados manualmente acima, mas de forma automatizada e repetível — usando os `data-testid` já deixados no HTML (`cell-0` a `cell-8`, `reset-button`).
+2. **Teste real com leitor de tela** (NVDA ou VoiceOver) para confirmar que os anúncios de `aria-live` realmente soam como esperado.
 3. **Indicador de placar** (quantas vitórias cada jogador teve) — melhoria de produto, não de qualidade, mas natural como segunda iteração.
