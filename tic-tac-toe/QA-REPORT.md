@@ -140,6 +140,28 @@ Se algo soar estranho ou não for anunciado, me conta o que você ouviu que eu a
 5. **Testes de regressão visual** — screenshots do tabuleiro em pontos-chave.
 6. **Modo "contra o computador"** — melhoria de produto para uma próxima iteração.
 
-## 8. Executável local (planejado, próximo passo agora que os 3 itens acima foram concluídos)
+## 8. Executável local
 
-Combinado com o usuário: um pacote simples (pasta com um atalho) que abre o jogo diretamente no navegador local, sem precisar de internet — não uma instalação tipo `.exe`.
+Pacote gerado: `JogoDaVelha-Offline.zip`, contendo:
+
+- `index.html`, `style.css`, `script.js` — cópias dos arquivos do jogo
+- `Jogar Jogo da Velha.bat` — atalho de conveniência que abre o jogo no navegador padrão
+- `LEIAME.txt` — instruções de uso, incluindo aviso sobre o SmartScreen do Windows
+
+### Decisões de QA aplicadas
+
+- **Confirmado que o jogo já é 100% offline por natureza**: `index.html` só referencia `style.css` e `script.js`, ambos locais — nenhum CDN, nenhuma fonte externa, nenhuma chamada de rede. Isso foi verificado antes de construir qualquer coisa em cima.
+- **Caminho relativo no `.bat`** (`%~dp0`, a pasta onde o próprio `.bat` está): garante que o atalho funcione não importa para onde a pasta seja movida (Área de Trabalho, Documentos, pendrive) — não fica preso a um caminho fixo do seu computador.
+- **Bug real encontrado e corrigido**: o `.bat` foi criado originalmente com fim de linha estilo Unix (LF); arquivos `.bat` do Windows esperam CRLF. O Windows moderno costuma tolerar, mas é um detalhe capaz de causar comportamento inconsistente em alguns casos — corrigido antes de empacotar.
+- **Aviso proativo sobre o SmartScreen do Windows**: arquivos `.bat`/`.exe` baixados da internet costumam disparar um aviso de segurança do Windows na primeira execução. Isso é comportamento padrão do sistema para qualquer arquivo baixado (não é específico deste jogo), mas documentei no `LEIAME.txt` para você não estranhar.
+
+### ✅ O que foi testado
+
+- Integridade do `.zip`: extraído e comparado — todos os 5 arquivos presentes, sem corrupção.
+- Codificação CRLF do `.bat`: confirmada antes e depois da compactação.
+- Sintaxe do comando (`start "" "%~dp0index.html"`): revisada manualmente — é a forma correta de abrir um arquivo com o programa padrão do sistema a partir de um `.bat`, com suporte a espaços no caminho.
+- Estrutura de referências do `index.html`: confirmada como 100% local (sem dependência de internet).
+
+### ⚠️ Limitação declarada com honestidade
+
+Não tenho acesso a uma máquina Windows real para **executar** o `.bat` de fato e confirmar visualmente que ele abre o jogo — meu ambiente é Linux, sem interface gráfica Windows. Tudo acima foi validado por revisão rigorosa de sintaxe, codificação e estrutura, mas não é o mesmo que ver funcionando ao vivo. Peço que você teste na sua máquina e me avise o resultado.
