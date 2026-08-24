@@ -1,0 +1,14 @@
+{
+  "name": "tic-tac-toe-qa",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Protótipo de Jogo da Velha com suíte de testes Cypress, parte do QA Automation Lab.",
+  "scripts": {
+    "start": "npx serve -l 8080 .",
+    "cy:open": "cypress open",
+    "cy:run": "cypress run"
+  },
+  "devDependencies": {
+    "cypress": "^13.17.0"
+  }
+}
