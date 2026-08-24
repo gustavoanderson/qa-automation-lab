@@ -10,6 +10,12 @@
 const cells = Array.from(document.querySelectorAll(".cell"));
 const statusEl = document.getElementById("status");
 const resetBtn = document.getElementById("reset");
+const scoreResetBtn = document.getElementById("score-reset");
+const scoreEls = {
+  X: document.querySelector('[data-testid="score-x"]'),
+  O: document.querySelector('[data-testid="score-o"]'),
+  draws: document.querySelector('[data-testid="score-draws"]'),
+};
 
 const WINNING_COMBINATIONS = [
   [0, 1, 2], [3, 4, 5], [6, 7, 8], // linhas
@@ -20,6 +26,10 @@ const WINNING_COMBINATIONS = [
 let boardState = Array(9).fill(null);
 let currentPlayer = "X";
 let gameOver = false;
+
+// O placar é um estado separado do tabuleiro, de propósito: reiniciar uma
+// partida (resetGame) não deve zerar o histórico de vitórias, só o board.
+let score = { X: 0, O: 0, draws: 0 };
 
 function handleCellClick(event) {
   const cell = event.currentTarget;
@@ -84,7 +94,26 @@ function endGame(message, winningLine) {
 
   if (winningLine) {
     winningLine.forEach((i) => cells[i].classList.add("winning-cell"));
+    // currentPlayer ainda é quem acabou de jogar (a troca de turno só
+    // acontece depois dessa checagem em makeMove), então é seguro
+    // creditar a vitória a ele aqui.
+    score[currentPlayer] += 1;
+  } else {
+    score.draws += 1;
   }
+
+  updateScoreboard();
+}
+
+function updateScoreboard() {
+  scoreEls.X.textContent = `X: ${score.X}`;
+  scoreEls.O.textContent = `O: ${score.O}`;
+  scoreEls.draws.textContent = `Empates: ${score.draws}`;
+}
+
+function resetScore() {
+  score = { X: 0, O: 0, draws: 0 };
+  updateScoreboard();
 }
 
 function resetGame() {
@@ -103,3 +132,4 @@ function resetGame() {
 
 cells.forEach((cell) => cell.addEventListener("click", handleCellClick));
 resetBtn.addEventListener("click", resetGame);
+scoreResetBtn.addEventListener("click", resetScore);
