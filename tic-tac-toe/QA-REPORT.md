@@ -17,9 +17,9 @@ Um jogo da velha para dois jogadores (X e O), jogado no mesmo dispositivo, em HT
 
 ### Decisão de arquitetura central: estado como única fonte de verdade
 
-O array `boardState` (9 posições, `null`/`"X"`/`"O"`) é a **única fonte de verdade** do jogo. A tela nunca é lida para decidir o que fazer a seguir — ela só *reflete* o estado. Essa decisão evita uma classe inteira de bugs comuns em jogos simples, onde a interface e o estado real "descolam" um do outro.
+O array `boardState` (9 posições, `null`/`"X"`/`"O"`) é a **única fonte de verdade** do jogo. A tela nunca é lida para decidir o que fazer a seguir — ela só *reflete* o estado.
 
-O **placar** (`score = { X, O, draws }`) foi implementado como um estado **separado e independente** do tabuleiro, de propósito: reiniciar uma partida (`resetGame`) não deve zerar o histórico de vitórias — só `resetScore` (botão "Zerar placar") faz isso.
+O **placar** (`score = { X, O, draws }`) foi implementado como um estado **separado e independente** do tabuleiro: reiniciar uma partida (`resetGame`) não zera o histórico de vitórias — só `resetScore` (botão "Zerar placar") faz isso.
 
 ### Guardas de QA aplicadas diretamente no código
 
@@ -27,16 +27,16 @@ O **placar** (`score = { X, O, draws }`) foi implementado como um estado **separ
 |---|---|
 | Clicar em célula já ocupada, sobrescrevendo a jogada | Checagem `boardState[index] !== null` antes de qualquer escrita |
 | Clicar em qualquer célula depois que o jogo já terminou | Flag `gameOver`, checada antes de aceitar qualquer clique |
-| Clique duplo/rápido na mesma célula | Botão desabilitado (`disabled = true`) assim que recebe uma jogada — bloqueio nativo do navegador, não apenas lógica em JS |
+| Clique duplo/rápido na mesma célula | Botão desabilitado (`disabled = true`) assim que recebe uma jogada — bloqueio nativo do navegador |
 | Resultado permitir jogadas residuais | `endGame()` desabilita **todas** as células, inclusive as vazias |
 | Estado "preso" após reiniciar | `resetGame()` restaura os 9 elementos (texto, `disabled`, classes, `aria-label`) |
-| Placar zerar junto com o tabuleiro (comportamento indesejado) | Placar implementado como estado separado — `resetGame()` nunca toca em `score` |
-| Placar creditar o jogador errado | Incremento usa `currentPlayer` **antes** da troca de turno, no exato momento da vitória |
+| Placar zerar junto com o tabuleiro (indesejado) | Placar implementado como estado separado — `resetGame()` nunca toca em `score` |
+| Placar creditar o jogador errado | Incremento usa `currentPlayer` **antes** da troca de turno |
 
 ### Acessibilidade considerada desde o início
 
 - Células e botões de ação são `<button>` nativos — focáveis e ativáveis por teclado sem código extra.
-- `aria-live="polite"` no status **e** no placar — leitores de tela anunciam mudanças automaticamente.
+- `aria-live="polite"` no status **e** no placar.
 - `aria-label` de cada célula é atualizado dinamicamente com a marcação.
 - Indicador visual de foco (`:focus-visible`) em todos os elementos interativos.
 - Alvo de toque mínimo de 60×60px nas células.
@@ -45,9 +45,7 @@ O **placar** (`score = { X, O, draws }`) foi implementado como um estado **separ
 
 ### Testes automatizados da lógica (Node.js, isolados do DOM)
 
-**17 casos, todos passando**, antes da publicação de cada funcionalidade:
-- 12 casos da lógica de vitória/empate (8 combinações, tabuleiro vazio, jogo em andamento, quase-vitória, vitória de O)
-- 5 casos da lógica de placar (zerado inicial, incremento de X, incremento de O, incremento de empate, zerar placar)
+**17 casos, todos passando**: 12 da lógica de vitória/empate (8 combinações, tabuleiro vazio, jogo em andamento, quase-vitória, vitória de O) + 5 da lógica de placar (zerado inicial, incremento de X, incremento de O, incremento de empate, zerar placar).
 
 Verificações estruturais: sintaxe de `script.js` validada (`node --check`), 9 células com índices únicos confirmados.
 
@@ -64,17 +62,20 @@ Cenários testados ao vivo — **todos com resultado correto**:
 | Reiniciar jogo | Tudo volta ao estado inicial |
 | Navegação somente por teclado (Tab + Enter) | Foco visível, Enter marca, foco pula célula desabilitada automaticamente |
 | Partida terminando em empate | Mensagem correta, sem falso destaque de vitória |
+| **Placar: vitória de X** | Incrementa `X: 1` corretamente |
+| **Placar: persistência ao reiniciar jogo** | Placar mantém `X: 1` mesmo após "Reiniciar jogo" (tabuleiro limpa, placar não) |
+| **Placar: empate** | Incrementa só `Empates`, sem alterar X/O |
+| **Placar: "Zerar placar"** | Zera X/O/Empates sem tocar no tabuleiro em andamento |
 
 ## 4. O que ainda não foi testado (limitação conhecida, declarada com honestidade)
 
-- **Placar**: lógica validada isoladamente (Node) e cobrance por testes Cypress escritos — mas **ainda não observado ao vivo no navegador**, diferente do restante do jogo.
 - **Suíte Cypress**: escrita e com sintaxe validada, mas **não executada** neste ambiente (ver seção 5) — precisa ser rodada localmente para confirmar que passa de verdade.
 - Não foi testado em múltiplos navegadores (só Chrome até agora) nem em dispositivos móveis reais.
-- Leitura de tela real (NVDA/VoiceOver) não foi verificada ao vivo — só a estrutura de `aria-live`/`aria-label` foi revisada no código.
+- **Leitura de tela real** (NVDA/VoiceOver com áudio de verdade) não foi verificada ao vivo — ver seção 6 para o que foi e não foi coberto nessa frente.
 
 ## 5. Suíte de testes automatizados com Cypress
 
-Suíte criada (`cypress/e2e/tic-tac-toe.cy.js`) cobrindo, de forma automatizada e repetível, os cenários já validados manualmente, expandindo a cobertura de vitória para **as 8 combinações possíveis** testadas via interface real (clique a clique, não só lógica pura):
+Suíte criada (`cypress/e2e/tic-tac-toe.cy.js`) cobrindo, de forma automatizada e repetível, os cenários já validados manualmente, expandindo a cobertura de vitória para **as 8 combinações possíveis** testadas via interface real:
 
 - Estado inicial, jogada válida, célula ocupada (inclusive clique duplo forçado)
 - As 8 combinações de vitória, com verificação de mensagem e destaque visual
@@ -85,11 +86,11 @@ Suíte criada (`cypress/e2e/tic-tac-toe.cy.js`) cobrindo, de forma automatizada 
 - Estrutura de acessibilidade (`aria-live`, `aria-label` dinâmico)
 - **Placar**: começa zerado, incrementa o vencedor certo, incrementa empates sem mexer em X/O, permanece acumulado ao reiniciar o jogo, zera com o botão dedicado
 
-Pequena captura de QA durante a escrita dos testes: o parágrafo de status não tinha `data-testid`, diferente dos outros elementos — corrigido no `index.html` para manter consistência e testabilidade.
+Pequena captura de QA durante a escrita dos testes: o parágrafo de status não tinha `data-testid` — corrigido no `index.html` para manter consistência e testabilidade.
 
 ### ⚠️ Limitação declarada com honestidade: a suíte foi escrita e teve a sintaxe validada, mas **não foi executada** neste ambiente
 
-Ao tentar instalar o Cypress (`npm install`), o registro do npm retornou erro 403 (`host_not_allowed`) — uma restrição de rede do ambiente de desenvolvimento usado para montar este projeto, não um problema do Cypress ou do código em si. **Os testes foram escritos com o mesmo rigor de sempre, mas eu não consegui de fato rodá-los e confirmar que todos passam.**
+Ao tentar instalar o Cypress (`npm install`), o registro do npm retornou erro 403 (`host_not_allowed`) — uma restrição de rede do ambiente de desenvolvimento usado para montar este projeto, não um problema do Cypress ou do código em si.
 
 Para rodar de verdade (recomendado antes de considerar essa suíte "confiável"):
 
@@ -102,20 +103,37 @@ npm run cy:open    # ou "npm run cy:run" para rodar sem interface
 
 Assim que você rodar localmente, me conte o resultado (ou cole a saída do terminal) para eu revisar juntos.
 
-## 6. Indicador de placar
+## 6. Revisão de acessibilidade
 
-Implementado: contadores de vitórias de X, vitórias de O e empates, exibidos abaixo do tabuleiro, com botão dedicado "Zerar placar" independente do "Reiniciar jogo". Lógica validada por 5 testes automatizados isolados (Node) e coberta por 5 testes Cypress — pendente apenas a observação ao vivo no navegador (item da seção 4) e a execução real da suíte Cypress.
+### O que foi verificado ao vivo (via automação de navegador)
+
+- **Ordem de tabulação completa**: `cell-0` → `cell-1` → ... → `cell-8` → `reset-button` → `score-reset-button`, sem pular nenhum elemento e sem paradas inesperadas.
+- **Sem "prisão de foco"**: pressionar Tab a partir do último botão faz o foco sair corretamente da página — uma prisão de foco (o teclado ficar "preso" dentro do jogo) seria um bug real de acessibilidade.
+- **`aria-live="polite"`** confirmado, direto no DOM ao vivo, tanto na região de status quanto na do placar.
+- **Foco de células desabilitadas é automaticamente pulado** pelo navegador — comportamento nativo de `<button disabled>`, sem necessidade de código extra.
+
+### ⚠️ Limitação declarada com honestidade
+
+Não tenho um leitor de tela (NVDA/VoiceOver) rodando de verdade neste ambiente — não é uma ferramenta que eu consigo operar diretamente. O que foi feito acima confirma a **estrutura** que um leitor de tela usaria, mas não confirma o **áudio real** anunciado.
+
+**Roteiro sugerido para você validar com o NVDA (gratuito, Windows)**:
+1. Instale o NVDA (nvaccess.org) e abra o jogo no navegador.
+2. Ligue o NVDA (Ctrl+Alt+N) e navegue até a página.
+3. Use Tab para percorrer o tabuleiro — o NVDA deve anunciar "Célula 1", "Célula 2" etc., e depois de marcar, "Célula 1, marcada com X".
+4. Jogue até uma vitória ou empate — o NVDA deve anunciar automaticamente a mudança no status (\`aria-live\`), sem precisar navegar até lá.
+5. Jogue novamente até uma vitória — o NVDA deve também anunciar a mudança no placar.
+
+Se algo soar estranho ou não for anunciado, me conta o que você ouviu que eu ajusto.
 
 ## 7. Próximos passos sugeridos (para sua aprovação, não implementados ainda)
 
-1. **Rodar a suíte Cypress localmente** e confirmar que os testes realmente passam (não pôde ser feito neste ambiente).
-2. **Teste manual do placar ao vivo** no navegador, mesmo padrão já feito para o restante do jogo.
-3. **Teste real com leitor de tela** (NVDA ou VoiceOver).
-4. **Validação de responsividade real** em viewport mobile (Chrome DevTools/emulação).
-5. **Testes de regressão visual** — screenshots do tabuleiro em pontos-chave para detectar quebras visuais futuras.
-6. **Pipeline de CI** (GitHub Actions) rodando a suíte Cypress a cada push.
-7. **Modo "contra o computador"** — melhoria de produto para uma próxima iteração.
+1. **Rodar a suíte Cypress localmente** e confirmar que os testes realmente passam.
+2. **Teste real com leitor de tela**, seguindo o roteiro da seção 6.
+3. **Validação de responsividade real** em viewport mobile (Chrome DevTools/emulação).
+4. **Testes de regressão visual** — screenshots do tabuleiro em pontos-chave.
+5. **Pipeline de CI** (GitHub Actions) rodando a suíte Cypress a cada push.
+6. **Modo "contra o computador"** — melhoria de produto para uma próxima iteração.
 
-## 8. Executável local (planejado, não iniciado)
+## 8. Executável local (planejado, próximo passo agora que os 3 itens acima foram concluídos)
 
-Combinado com o usuário: ao final da lista de próximos passos acima, será criado um pacote simples (pasta com um atalho) que abre o jogo diretamente no navegador local do usuário, sem precisar de internet — não uma instalação tipo `.exe`.
+Combinado com o usuário: um pacote simples (pasta com um atalho) que abre o jogo diretamente no navegador local, sem precisar de internet — não uma instalação tipo `.exe`.
