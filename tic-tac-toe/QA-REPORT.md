@@ -69,9 +69,9 @@ Cenários testados ao vivo — **todos com resultado correto**:
 
 ## 4. O que ainda não foi testado (limitação conhecida, declarada com honestidade)
 
-- **Suíte Cypress**: escrita e com sintaxe validada, mas **não executada** neste ambiente (ver seção 5) — precisa ser rodada localmente para confirmar que passa de verdade.
 - Não foi testado em múltiplos navegadores (só Chrome até agora) nem em dispositivos móveis reais.
 - **Leitura de tela real** (NVDA/VoiceOver com áudio de verdade) não foi verificada ao vivo — ver seção 6 para o que foi e não foi coberto nessa frente.
+- **Cypress Cloud**: o dashboard visual (histórico de execuções, gravações analisáveis) ainda não está ativo — em configuração (ver seção 5).
 
 ## 5. Suíte de testes automatizados com Cypress
 
@@ -88,20 +88,21 @@ Suíte criada (`cypress/e2e/tic-tac-toe.cy.js`) cobrindo, de forma automatizada 
 
 Pequena captura de QA durante a escrita dos testes: o parágrafo de status não tinha `data-testid` — corrigido no `index.html` para manter consistência e testabilidade.
 
-### ⚠️ Limitação declarada com honestidade: a suíte foi escrita e teve a sintaxe validada, mas **não foi executada** neste ambiente
+### ✅ Execução real confirmada via CI (GitHub Actions)
 
-Ao tentar instalar o Cypress (`npm install`), o registro do npm retornou erro 403 (`host_not_allowed`) — uma restrição de rede do ambiente de desenvolvimento usado para montar este projeto, não um problema do Cypress ou do código em si.
+O ambiente onde este projeto foi desenvolvido tinha uma restrição de rede que impedia `npm install` (erro 403 `host_not_allowed` no registro do npm) — então a suíte não pôde ser executada ali. A solução: um workflow do GitHub Actions (`.github/workflows/cypress.yml`) que instala e roda a suíte de verdade nos servidores do GitHub, sem essa restrição.
 
-Para rodar de verdade (recomendado antes de considerar essa suíte "confiável"):
+Na primeira tentativa, a action de Cypress falhou por um motivo diferente e real: seu mecanismo de cache de dependências exige um lockfile (`package-lock.json`), que também não pôde ser gerado no ambiente de desenvolvimento. Corrigido separando a instalação (`npm install` manual) da execução dos testes.
 
-```bash
-cd tic-tac-toe
-npm install
-npm start          # sobe o jogo em http://localhost:8080 (em outro terminal)
-npm run cy:open    # ou "npm run cy:run" para rodar sem interface
+**Resultado real da execução (GitHub Actions, run #3, commit `b10a384`)**:
+
+```
+22 passing (8s)
 ```
 
-Assim que você rodar localmente, me conte o resultado (ou cole a saída do terminal) para eu revisar juntos.
+**22 de 22 testes passando, 0 falhas**, rodando em um navegador Chrome real, nos servidores do GitHub — não é mais uma limitação, é uma suíte validada de ponta a ponta. Vídeos da execução são salvos automaticamente como artefato do workflow a cada run.
+
+O workflow roda automaticamente a cada `push` na pasta `tic-tac-toe/` (ou pode ser disparado manualmente pela aba Actions do repositório).
 
 ## 6. Revisão de acessibilidade
 
@@ -127,11 +128,11 @@ Se algo soar estranho ou não for anunciado, me conta o que você ouviu que eu a
 
 ## 7. Próximos passos sugeridos (para sua aprovação, não implementados ainda)
 
-1. **Rodar a suíte Cypress localmente** e confirmar que os testes realmente passam.
-2. **Teste real com leitor de tela**, seguindo o roteiro da seção 6.
-3. **Validação de responsividade real** em viewport mobile (Chrome DevTools/emulação).
-4. **Testes de regressão visual** — screenshots do tabuleiro em pontos-chave.
-5. **Pipeline de CI** (GitHub Actions) rodando a suíte Cypress a cada push.
+1. ~~Rodar a suíte Cypress localmente~~ — ✅ feito via CI (GitHub Actions), 22/22 passando (seção 5).
+2. **Concluir a configuração do Cypress Cloud** — dashboard visual com histórico de execuções, screenshots e vídeos navegáveis (em andamento, ver seção 5).
+3. **Teste real com leitor de tela**, seguindo o roteiro da seção 6.
+4. **Validação de responsividade real** em viewport mobile (Chrome DevTools/emulação).
+5. **Testes de regressão visual** — screenshots do tabuleiro em pontos-chave.
 6. **Modo "contra o computador"** — melhoria de produto para uma próxima iteração.
 
 ## 8. Executável local (planejado, próximo passo agora que os 3 itens acima foram concluídos)
