@@ -71,7 +71,6 @@ Cenários testados ao vivo — **todos com resultado correto**:
 
 - Não foi testado em múltiplos navegadores (só Chrome até agora) nem em dispositivos móveis reais.
 - **Leitura de tela real** (NVDA/VoiceOver com áudio de verdade) não foi verificada ao vivo — ver seção 6 para o que foi e não foi coberto nessa frente.
-- **Cypress Cloud**: o dashboard visual (histórico de execuções, gravações analisáveis) ainda não está ativo — em configuração (ver seção 5).
 
 ## 5. Suíte de testes automatizados com Cypress
 
@@ -104,6 +103,12 @@ Na primeira tentativa, a action de Cypress falhou por um motivo diferente e real
 
 O workflow roda automaticamente a cada `push` na pasta `tic-tac-toe/` (ou pode ser disparado manualmente pela aba Actions do repositório).
 
+### ✅ Cypress Cloud configurado e confirmado
+
+Foi criado um projeto dedicado no Cypress Cloud (`qa-automation-lab-tic-tac-toe`, Project ID `pzgdmc`, separado do projeto já usado por outro repositório) e o workflow foi ajustado para gravar automaticamente lá quando o segredo `CYPRESS_RECORD_KEY` estiver presente no repositório.
+
+**Confirmação real de gravação** (run manual, commit `47b87e9`): o log mostrou `(Uploaded Cloud Artifacts) — Test Replay - Done Uploading 323 kB`, e o dashboard em [cloud.cypress.io](https://cloud.cypress.io) reflete a execução completa — 22 passed / 0 failed, ligada ao commit e ao run do GitHub Actions, com **Test Replay navegável individualmente por teste** (não apenas vídeo bruto — permite inspecionar comandos, DOM e rede de cada teste após a execução).
+
 ## 6. Revisão de acessibilidade
 
 ### O que foi verificado ao vivo (via automação de navegador)
@@ -129,7 +134,7 @@ Se algo soar estranho ou não for anunciado, me conta o que você ouviu que eu a
 ## 7. Próximos passos sugeridos (para sua aprovação, não implementados ainda)
 
 1. ~~Rodar a suíte Cypress localmente~~ — ✅ feito via CI (GitHub Actions), 22/22 passando (seção 5).
-2. **Concluir a configuração do Cypress Cloud** — dashboard visual com histórico de execuções, screenshots e vídeos navegáveis (em andamento, ver seção 5).
+2. ~~Concluir a configuração do Cypress Cloud~~ — ✅ feito: projeto dedicado criado (`qa-automation-lab-tic-tac-toe`), gravação real confirmada (Test Replay navegável por teste, dashboard em cloud.cypress.io) — ver seção 5.
 3. **Teste real com leitor de tela**, seguindo o roteiro da seção 6.
 4. **Validação de responsividade real** em viewport mobile (Chrome DevTools/emulação).
 5. **Testes de regressão visual** — screenshots do tabuleiro em pontos-chave.
