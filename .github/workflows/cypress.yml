@@ -1,0 +1,53 @@
+name: Cypress E2E Tests
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "tic-tac-toe/**"
+      - ".github/workflows/cypress.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "tic-tac-toe/**"
+  workflow_dispatch: {}
+
+jobs:
+  cypress-run:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Cypress tests
+        uses: cypress-io/github-action@v6
+        with:
+          working-directory: tic-tac-toe
+          start: npx serve -l 8080 .
+          wait-on: "http://localhost:8080"
+          wait-on-timeout: 60
+          browser: chrome
+          # A gravação no Cypress Cloud liga sozinha assim que o segredo
+          # CYPRESS_RECORD_KEY existir no repositório (ver QA-REPORT.md,
+          # seção 5, para o passo a passo de configuração). Sem o segredo,
+          # os testes rodam normalmente, só não sobem para o dashboard.
+          record: ${{ secrets.CYPRESS_RECORD_KEY != '' }}
+        env:
+          CYPRESS_RECORD_KEY: ${{ secrets.CYPRESS_RECORD_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload screenshots (only on failure)
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: cypress-screenshots
+          path: tic-tac-toe/cypress/screenshots
+          if-no-files-found: ignore
+
+      - name: Upload videos
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: cypress-videos
+          path: tic-tac-toe/cypress/videos
+          if-no-files-found: ignore
