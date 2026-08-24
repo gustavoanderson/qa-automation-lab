@@ -15,14 +15,32 @@ on:
 jobs:
   cypress-run:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: tic-tac-toe
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm install
 
       - name: Run Cypress tests
         uses: cypress-io/github-action@v6
         with:
           working-directory: tic-tac-toe
+          # A instalação já foi feita no passo acima — sem lockfile
+          # comitado, o cache automático da action falha exigindo um
+          # package-lock.json/yarn.lock/pnpm-lock.yaml. Como não conseguimos
+          # gerar um lockfile no ambiente onde este projeto foi montado
+          # (registro do npm bloqueado lá), instalamos manualmente e
+          # desligamos a etapa de instalação/cache da action.
+          install: false
           start: npx serve -l 8080 .
           wait-on: "http://localhost:8080"
           wait-on-timeout: 60
