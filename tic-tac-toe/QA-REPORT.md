@@ -136,9 +136,10 @@ Se algo soar estranho ou não for anunciado, me conta o que você ouviu que eu a
 1. ~~Rodar a suíte Cypress localmente~~ — ✅ feito via CI (GitHub Actions), 22/22 passando (seção 5).
 2. ~~Concluir a configuração do Cypress Cloud~~ — ✅ feito: projeto dedicado criado (`qa-automation-lab-tic-tac-toe`), gravação real confirmada (Test Replay navegável por teste, dashboard em cloud.cypress.io) — ver seção 5.
 3. **Teste real com leitor de tela**, seguindo o roteiro da seção 6.
-4. **Validação de responsividade real** em viewport mobile (Chrome DevTools/emulação).
+4. ~~Validação de responsividade real~~ — ✅ feito: 4 larguras testadas (320/375/414/768px) sem estouro horizontal, interação confirmada em 320px, achado real documentado sobre altura dos botões (seção 9).
 5. **Testes de regressão visual** — screenshots do tabuleiro em pontos-chave.
 6. **Modo "contra o computador"** — melhoria de produto para uma próxima iteração.
+7. **Ajustar altura dos botões** (proposta da seção 9, aguardando aprovação) — pequeno aumento de padding para atingir o alvo de toque AAA de 44px.
 
 ## 8. Executável local
 
@@ -165,3 +166,44 @@ Pacote gerado: `JogoDaVelha-Offline.zip`, contendo:
 ### ⚠️ Limitação declarada com honestidade
 
 Não tenho acesso a uma máquina Windows real para **executar** o `.bat` de fato e confirmar visualmente que ele abre o jogo — meu ambiente é Linux, sem interface gráfica Windows. Tudo acima foi validado por revisão rigorosa de sintaxe, codificação e estrutura, mas não é o mesmo que ver funcionando ao vivo. Peço que você teste na sua máquina e me avise o resultado.
+
+**✅ Atualização**: testado pelo usuário na máquina Windows real — funcionou.
+
+## 9. Validação de responsividade mobile
+
+### Metodologia (e um obstáculo de ferramenta encontrado no caminho)
+
+Tentativa inicial: redimensionar a janela real do navegador via automação (Claude in Chrome) para simular larguras de tela mobile. A ferramenta reportou sucesso, mas a verificação via `window.innerWidth` confirmou que o viewport real **não mudou** (permaneceu em 1280px) — provavelmente porque a janela do navegador estava maximizada no sistema operacional, e o redimensionamento não conseguiu sobrepor esse estado.
+
+**Contorno aplicado**: em vez de depender do redimensionamento da janela, criei uma página de teste com **iframes de largura fixa** apontando para o jogo publicado — isso renderiza o CSS responsivo real do jogo exatamente na largura desejada, independente do tamanho da janela do navegador.
+
+### Larguras testadas (visual, ao vivo)
+
+| Largura | Referência | Resultado |
+|---|---|---|
+| 320px | Android/iPhone SE mais antigo | ✅ Sem estouro horizontal, tabuleiro e botões totalmente visíveis |
+| 375px | iPhone SE (2020)/6/7/8 | ✅ Sem estouro horizontal |
+| 414px | iPhone Plus/Pro Max | ✅ Sem estouro horizontal |
+| 768px | Tablet/iPad retrato | ✅ Layout mantém o design centralizado (`max-width: 360px` do container), sem esticar de forma estranha |
+
+### Teste funcional na largura mais crítica (320px)
+
+Cliquei em duas células reais dentro do iframe de 320px — jogadas registradas corretamente (X e O marcados, turno alternado), confirmando que a interação não é só visual, funciona de verdade nessa largura.
+
+### Tamanho de alvo de toque
+
+| Elemento | Tamanho | Referência WCAG |
+|---|---|---|
+| Células do tabuleiro | 60×60px (`min-height`/`min-width` fixos no CSS, não mudam por media query) | ✅ Acima do alvo recomendado AAA (44×44px) |
+| Botão "Reiniciar jogo" | ≈ 38–39px de altura (padding 10px + texto 16px, calculado a partir do CSS-fonte) | ⚠️ Abaixo do alvo recomendado AAA (44px); acima do mínimo AA (24px) |
+| Botão "Zerar placar" | ≈ 36–37px de altura (padding 10px + texto ~14.4px, calculado a partir do CSS-fonte) | ⚠️ Abaixo do alvo recomendado AAA (44px); acima do mínimo AA (24px) |
+
+### ⚠️ Limitação declarada com honestidade
+
+Os iframes usados são de origem cruzada (cross-origin) em relação à página de teste, então não consegui rodar JavaScript dentro deles para medir os botões com precisão via `getBoundingClientRect()`. As medidas de altura dos botões acima vêm de **cálculo a partir do CSS-fonte** (padding + line-height), não de uma medição ao vivo no DOM renderizado — uma estimativa sólida, mas com menos rigor que a das células (onde o CSS já define `min-height`/`min-width` explícitos e inequívocos, sem precisar calcular nada).
+
+### Achado real: botões um pouco abaixo do alvo de toque ideal
+
+As células do tabuleiro (a interação principal do jogo) estão folgadas — bem acima do recomendado. Mas os botões "Reiniciar jogo" e "Zerar placar" ficam abaixo do alvo AAA de 44px, o que pode tornar o toque um pouco menos confortável em telas pequenas (ainda dentro do mínimo aceitável AA, então não é um bloqueio, só uma oportunidade de melhoria).
+
+**Proposta de melhoria (aguardando sua aprovação, não implementada)**: aumentar o padding vertical desses dois botões (de `10px` para algo como `13–14px`) elevaria a altura para perto de 44px, sem mudar o visual de forma perceptível.
